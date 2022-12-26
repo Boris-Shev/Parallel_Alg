@@ -1,5 +1,25 @@
 #include "header.hpp"
 
+int TestInitArg (int argc, char* argv[], int* n, int* m, int* p, int* k) {
+   if (argc < 5)
+     return -1;
+
+   for (int i = 1; i < 5; i++) {
+     std::string s(argv[i]);
+     std::string::const_iterator it = s.begin();
+
+     while (it != s.end() && std::isdigit(*it)) ++it;
+     if (!(!s.empty() && it == s.end()))
+       return -2;
+   }
+   *n = std::stoi(argv[1]);
+   *m = std::stoi(argv[2]);
+   *p = std::stoi(argv[3]);
+   *k = std::stoi(argv[4]);
+
+   return 0;
+}
+
 int InMat (int size, int formula, double* matrx, char* file) {
   if (formula == 0) {
     std::ifstream fin(file);
@@ -28,11 +48,11 @@ double HelperInMat (int formula, int size, int i, int j) {
   switch (formula) {
     case 1:
       return size - std::max(i + 1, j + 1) + 1;
-    case 2:
+    case 2: // НЕ положительно опредлена
       return std::max(i + 1, j + 1);
-    case 3:
+    case 3: // Нули на диагонали => деление на ноль
       return std::fabs(i - j);
-    case 4:
+    case 4: // Положительно определена, но накапливаются ошибки
       return 1 / double(i + j + 1);
     default:
       return 0;
@@ -56,6 +76,10 @@ void PrintMat (double* matrx, int numRow, int numCol, int limiter) {
       printf("\n");
     }
   }
+}
+
+void PrintMat (double* matrx, int numRow, int numCol) {
+  PrintMat(matrx, numRow, numCol, std::max(numCol, numRow));
 }
 
 double Residual (double* A, int n, double* b, double* x) {

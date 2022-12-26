@@ -2,44 +2,47 @@
 
 using namespace std;
 
-int HolecAlg (int n, double* A, double* b, double* x, double* ExtraMem) {
+int HolecAlg (int n, double* A, double* b, double* x, double* R) {
   double sum = 0;
   for (int i = 0; i < n; i++) {
     for (int j = 0; j <= i; j++) {
       sum = 0;
       for (int k = 0; k < j; k++){
-        sum += ExtraMem[i*n + k] * ExtraMem[j*n + k];
+        sum += R[i*n + k] * R[j*n + k];
       }
       if (i == j) {
-        ExtraMem[i*n + j] = sqrt(fabs(A[i*n + i] - sum));
+        if (A[i*n + i] - sum < 0)
+          return -2;
+
+        R[i*n + j] = sqrt(fabs(A[i*n + i] - sum));
       }
       else {
-        if (fabs(ExtraMem[j*n + j]) < std::numeric_limits<double>::epsilon())
+        if (fabs(R[j*n + j]) < std::numeric_limits<double>::epsilon())
           return -1; // Матрица вырождена
-        ExtraMem[i*n + j] = (1.0 / ExtraMem[j*n + j] * (A[i*n + j] - sum));
+        R[i*n + j] = (1.0 / R[j*n + j] * (A[i*n + j] - sum));
       }
     }
   }
-   //PrintMat(ExtraMem,n,n,n);
+   //PrintMat(R,n,n,n);
    //printf("\n");
 
 
 
   for (int k = 0; k < n; k++) {
     for (int i = 0; i < k; i++) {
-      ExtraMem[k*n + i] /= ExtraMem[k*n + k];
+      R[k*n + i] /= R[k*n + k];
     }
-    ExtraMem[k*n + k] = 1 / ExtraMem[k*n + k];
+    R[k*n + k] = 1 / R[k*n + k];
     for(int i = k + 1; i < n; i++){
       for (int j = 0; j < k; j++) {
-        ExtraMem[i*n + j] += - ExtraMem[k*n + j] * ExtraMem[i*n + k];
+        R[i*n + j] += - R[k*n + j] * R[i*n + k];
       }
     }
     for (int i = k + 1; i < n; i++) {
-      ExtraMem[i*n + k] = - ExtraMem[k*n + k] * ExtraMem[i*n + k];
+      R[i*n + k] = - R[k*n + k] * R[i*n + k];
     }
   }
-  // PrintMat(ExtraMem, n, n, n);
+  // PrintMat(R, n, n, n);
   // printf("\n");
 
   for (int m = 0; m < n; m++) {
@@ -47,14 +50,14 @@ int HolecAlg (int n, double* A, double* b, double* x, double* ExtraMem) {
     for (int z = 0; z < m; z++) {
       sum = 0;
       for (int k = m; k < n; k++) {
-        sum += ExtraMem[k*n + z] * ExtraMem[k*n + m];
+        sum += R[k*n + z] * R[k*n + m];
       }
       sum2 += sum * b[z];
     }
     for (int z = m; z < n; z++) {
       sum = 0;
       for (int k = z; k < n; k++) {
-        sum += ExtraMem[k*n + z] * ExtraMem[k*n + m];
+        sum += R[k*n + z] * R[k*n + m];
       }
       sum2 += sum * b[z];
     }

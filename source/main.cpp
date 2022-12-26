@@ -1,28 +1,26 @@
 #include "header.hpp"
 
 int main(int argc, char* argv[]) {
-  if (argc < 4) {
-    printf("Недостаточное количество аргументов\n");
-    return -1;
+  int n, m, p, k, err;
+  err = TestInitArg(argc, argv, &n, &m, &p, &k);
+  switch (err) {
+    case -1:
+      printf("Недостаточное количество аргументов\n");
+      return -1;
+
+    case -2:
+      printf("Некорректные аргументы\n");
+      return -2;
+
+    default:
+      break;
   }
-  for (int i = 1; i < 4; i++) {
-    std::string s(argv[i]);
-    std::string::const_iterator it = s.begin();
-    while (it != s.end() && std::isdigit(*it)) ++it;
-    if (!(!s.empty() && it == s.end())) {
-          printf("Некорректные аргументы\n");
-          return -2;
-    }
-  }
-  int n = std::stoi(argv[1]);
-  int m = std::stoi(argv[2]);
-  int k = std::stoi(argv[3]);
+
   if (n <= 0) {
     printf("Некорректный размер матрицы\n");
     return -3;
   }
   double* matrx = new double[n*n];
-  int err;
   if (k == 0)
     err = InMat(n, k, matrx, argv[4]);
   else
@@ -69,6 +67,14 @@ int main(int argc, char* argv[]) {
     delete[] x;
     delete[] extra_mem;
     return -8;
+  }
+  if (err == -2) {
+    printf("Матрица не является положительно определенной\n");
+    delete[] matrx;
+    delete[] b;
+    delete[] x;
+    delete[] extra_mem;
+    return -9;
   }
   PrintMat(x, n, 1, m);
   printf("Время алгоритма: %.3lf\n", time);
