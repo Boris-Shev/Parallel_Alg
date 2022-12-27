@@ -2,45 +2,54 @@
 
 using namespace std;
 
-int HolecAlg (int n, double* A, double* b, double* x, double* R) {
+void* HolecAlgParallel(void* arg) {
+  ARGS* args = (ARGS*)arg;
+
+  HolecAlg(args->n, args->id, args->total_threads,
+                      args->A, args->b, args->x, args->ExtraMem);
+
+  return nullptr;
+}
+
+int HolecAlg (int n, int id, int total_threads, double* A,
+              double* b, double* x, double* R) {
+id=id;total_threads=total_threads;
+
   double sum = 0;
   for (int i = 0; i < n; i++) {
     for (int j = 0; j <= i; j++) {
       sum = 0;
-      for (int k = 0; k < j; k++){
+      for (int k = 0; k < j; k++){                  // Распараллелить хз как
         sum += R[i*n + k] * R[j*n + k];
       }
-      if (i == j) {
-        if (A[i*n + i] - sum < 0)
-          return -2;
-
+      if (i == j)
         R[i*n + j] = sqrt(fabs(A[i*n + i] - sum));
-      }
+
       else {
         if (fabs(R[j*n + j]) < std::numeric_limits<double>::epsilon())
           return -1; // Матрица вырождена
+
         R[i*n + j] = (1.0 / R[j*n + j] * (A[i*n + j] - sum));
       }
     }
+    // PrintMat(R,n,n);
+    // printf("\n");
   }
-   //PrintMat(R,n,n,n);
-   //printf("\n");
-
-
+   // PrintMat(R,n,n);
+   // printf("\n");
 
   for (int k = 0; k < n; k++) {
-    for (int i = 0; i < k; i++) {
+    for (int i = 0; i < k; i++)
       R[k*n + i] /= R[k*n + k];
-    }
+
     R[k*n + k] = 1 / R[k*n + k];
-    for(int i = k + 1; i < n; i++){
-      for (int j = 0; j < k; j++) {
+
+    for(int i = k + 1; i < n; i++)
+      for (int j = 0; j < k; j++)                 // Распараллелить можно
         R[i*n + j] += - R[k*n + j] * R[i*n + k];
-      }
-    }
-    for (int i = k + 1; i < n; i++) {
+
+    for (int i = k + 1; i < n; i++)
       R[i*n + k] = - R[k*n + k] * R[i*n + k];
-    }
   }
   // PrintMat(R, n, n, n);
   // printf("\n");
@@ -49,14 +58,14 @@ int HolecAlg (int n, double* A, double* b, double* x, double* R) {
     double sum2 = 0;
     for (int z = 0; z < m; z++) {
       sum = 0;
-      for (int k = m; k < n; k++) {
+      for (int k = m; k < n; k++) {               // Распараллелить
         sum += R[k*n + z] * R[k*n + m];
       }
       sum2 += sum * b[z];
     }
     for (int z = m; z < n; z++) {
       sum = 0;
-      for (int k = z; k < n; k++) {
+      for (int k = z; k < n; k++) {                 // Распараллелить
         sum += R[k*n + z] * R[k*n + m];
       }
       sum2 += sum * b[z];

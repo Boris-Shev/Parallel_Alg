@@ -1,8 +1,8 @@
 #include "header.hpp"
 
 int main(int argc, char* argv[]) {
-  int n, m, p, k, err;
-  err = TestInitArg(argc, argv, &n, &m, &p, &k);
+  int n, m, total_threads, k, err;
+  err = TestInitArg(argc, argv, &n, &m, &total_threads, &k);
   switch (err) {
     case -1:
       printf("Недостаточное количество аргументов\n");
@@ -54,11 +54,50 @@ int main(int argc, char* argv[]) {
       sum += matrx[i*n + 2*j];
     b[i] = sum;
   }
+
   double* extra_mem = new double[n*n];
+  ARGS* args = new ARGS[total_threads];
+  pthread_t* threads = new pthread_t[total_threads];
+  for (int i = 0; i < total_threads; i++)
+	{
+		args[i].n = n;
+		args[i].A = matrx;
+    args[i].b = b;
+		args[i].x = x;
+		args[i].id = i;
+    args[i].ExtraMem = extra_mem;
+		args[i].total_threads = total_threads;
+	}
 
   err = 0;
   double time = (double)clock();
-  err = HolecAlg (n, matrx, b, x, extra_mem);
+  ////////////////////////////////////////////////////////
+  for (int i = 0; i < total_threads; i++)
+		if (pthread_create(threads + i, nullptr, HolecAlgParallel, args + i)) {
+			printf("Не получилось создать поток %d!\n", i);
+      delete[] matrx;
+      delete[] b;
+      delete[] x;
+      delete[] extra_mem;
+      delete[] args;
+      delete[] threads;
+
+			return -10;
+		}
+
+	for (int i = 0; i < total_threads; i++)
+		if (pthread_join(threads[i], nullptr))
+		{
+			printf("Не получилось подождать поток %d!\n", i);
+      delete[] matrx;
+      delete[] b;
+      delete[] x;
+      delete[] extra_mem;
+      delete[] args;
+      delete[] threads;
+			return -11;
+		}
+    ////////////////////////////////////////////////////
   time = (double)(clock() - time) / CLOCKS_PER_SEC;
   if (err == -1) {
     printf("Матрица вырождена или некорректна\n");
@@ -66,16 +105,11 @@ int main(int argc, char* argv[]) {
     delete[] b;
     delete[] x;
     delete[] extra_mem;
+    delete[] args;
+    delete[] threads;
     return -8;
   }
-  if (err == -2) {
-    printf("Матрица не является положительно определенной\n");
-    delete[] matrx;
-    delete[] b;
-    delete[] x;
-    delete[] extra_mem;
-    return -9;
-  }
+
   PrintMat(x, n, 1, m);
   printf("Время алгоритма: %.3lf\n", time);
   printf("Норма невязки: %lf\n", Residual(matrx, n, b, x));
@@ -85,5 +119,7 @@ int main(int argc, char* argv[]) {
   delete[] b;
   delete[] x;
   delete[] extra_mem;
+  delete[] args;
+  delete[] threads;
   return 0;
 }

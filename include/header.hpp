@@ -8,6 +8,20 @@
 #include <limits>
 #include <ctype.h>
 #include <string>
+#include <pthread.h>
+
+struct ARGS
+{
+  int n;
+	double* A;
+  double* b;
+	double* x;
+  double* ExtraMem;
+	int id;
+	int total_threads;
+};
+
+void synchronize(int total_threads);
 
 int TestInitArg (int argc, char* argv[], int* n, int* m, int* p, int* k);
 
@@ -19,7 +33,10 @@ void PrintMat (double* matrx, int numRow, int numCol, int limiter);
 
 void PrintMat (double* matrx, int numRow, int numCol);
 
-int HolecAlg (int n, double* A, double* b, double* x, double* ExtraMem);
+void* HolecAlgParallel(void* arg);
+
+int HolecAlg (int n, int id, int total_threads, double* A,
+              double* b, double* x, double* ExtraMem);
 
 template <typename T>
 int Sgn(T);

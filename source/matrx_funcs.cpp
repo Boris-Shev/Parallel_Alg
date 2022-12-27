@@ -48,11 +48,11 @@ double HelperInMat (int formula, int size, int i, int j) {
   switch (formula) {
     case 1:
       return size - std::max(i + 1, j + 1) + 1;
-    case 2: // НЕ положительно опредлена
-      return std::max(i + 1, j + 1);
+    case 2:
+      return 2 * (i == j) - 1 * (std::abs(i - j) == 1);
     case 3: // Нули на диагонали => деление на ноль
       return std::fabs(i - j);
-    case 4: // Положительно определена, но накапливаются ошибки
+    case 4: //  Накапливаются ошибки
       return 1 / double(i + j + 1);
     default:
       return 0;
