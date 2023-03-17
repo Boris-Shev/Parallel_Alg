@@ -5,17 +5,30 @@ int TestInitArg (int argc, char* argv[], int* n, int* m, int* p, int* k) {
      return -1;
 
    for (int i = 1; i < 5; i++) {
+     int ind = 0;
      std::string s(argv[i]);
      std::string::const_iterator it = s.begin();
 
-     while (it != s.end() && std::isdigit(*it)) ++it;
-     if (!(!s.empty() && it == s.end()))
+     while (it != s.end() && std::isdigit(*it)) {
+       ++it;
+       ++ind;
+     }
+     if (!(!s.empty() && it == s.end()) || ind > 5)
        return -2;
    }
    *n = std::stoi(argv[1]);
    *m = std::stoi(argv[2]);
    *p = std::stoi(argv[3]);
    *k = std::stoi(argv[4]);
+
+   if(*p <= 0)
+    return -2;
+
+   if(*k > 4 || *k < 0)
+    return -2;
+
+   if (*m < 0)
+    return -2;
 
    return 0;
 }
@@ -26,12 +39,17 @@ int InMat (int size, int formula, double* matrx, char* file) {
     if(!fin.is_open()){ // Ошибка открытия файла
       return -1;
     }
-    int i;
-    for (i = 0; fin >> matrx[i] && i < size*size; i++) {}
+    int i = 0;
+    double tmp;
+    for (i = 0; fin >> tmp && i < size*size; i++)
+      matrx[i] = tmp;
+
     if (fin.eof() && i == size*size)
       {}
-    else if (fin.eof() && i != size*size) // Недостаточное количество элементов
-      return -4;
+    else if (i != size*size) // Недостаточное количество элементов
+      return -2;
+    else if (!fin.eof()) // Файл больше чем размерность матрицы
+      return -2;
     else if (fin.fail()) // Неверный формат данных
       return -2;
     else if (fin.bad()) // Ошибка ввода-вывода при чтении
@@ -49,10 +67,10 @@ double HelperInMat (int formula, int size, int i, int j) {
     case 1:
       return size - std::max(i + 1, j + 1) + 1;
     case 2:
-      return 2 * (i == j) - 1 * (std::abs(i - j) == 1);
-    case 3: // Нули на диагонали => деление на ноль
+      return std::max(i + 1, j + 1);
+    case 3:
       return std::fabs(i - j);
-    case 4: //  Накапливаются ошибки
+    case 4:
       return 1 / double(i + j + 1);
     default:
       return 0;
@@ -110,4 +128,17 @@ double Inaccuracy (double* x, int size) {
     sum += x[i] * x[i];
   }
   return std::sqrt(std::fabs(sum));
+}
+
+double currentTime() {
+    struct timeval time;
+    gettimeofday(&time, NULL);
+    return ((double)time.tv_sec * 1000000. + (double)time.tv_usec)/1000000.;
+}
+
+double cpu_time()
+{
+	struct rusage buf;
+	getrusage(RUSAGE_SELF, &buf);
+	return (double)buf.ru_utime.tv_sec+(double)buf.ru_utime.tv_usec/1000000.0;
 }
